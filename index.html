@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#ffe7ef">
+  <title>Your Little Mirror 💗</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; display: grid; place-items: center;
+      padding: 24px; color: #642c43;
+      font-family: Georgia, "Times New Roman", serif;
+      background: radial-gradient(circle at top, #fff8fb, #ffe4ee 55%, #f9cbdc);
+    }
+    main {
+      width: min(100%, 480px); text-align: center; padding: 28px 22px 30px;
+      border: 1px solid #f5bfd1; border-radius: 28px;
+      background: rgba(255,255,255,.82);
+      box-shadow: 0 18px 55px rgba(130, 48, 83, .14);
+    }
+    .heart { font-size: 32px; margin-bottom: 8px; }
+    h1 { font-size: clamp(30px, 8vw, 42px); margin: 4px 0 10px; }
+    p { font-size: 17px; line-height: 1.55; margin: 10px auto 20px; }
+    button {
+      border: 0; border-radius: 999px; padding: 14px 24px; margin: 7px;
+      font-size: 16px; font-weight: 700; cursor: pointer;
+      background: #c94f7c; color: white;
+      box-shadow: 0 7px 18px rgba(201,79,124,.22);
+    }
+    button.secondary { background: #f7e1e9; color: #873b5b; }
+    button:focus-visible { outline: 3px solid #7b3151; outline-offset: 3px; }
+    video {
+      display: none; width: 100%; max-height: 58vh; margin-top: 18px;
+      border-radius: 20px; background: #f4d5e0; object-fit: cover;
+      transform: scaleX(-1);
+    }
+    #status { min-height: 25px; font: 14px/1.45 Arial, sans-serif; color: #805268; }
+    .note { font: 12px/1.5 Arial, sans-serif; color: #946d7d; margin-top: 18px; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="heart">♡</div>
+    <h1>Your Little Mirror</h1>
+    <p>Someone beautiful is waiting to be seen…<br>Ready for a little reminder? 💗</p>
+    <button id="start">Open Your Mirror ✨</button>
+    <button id="stop" class="secondary" hidden>Turn camera off</button>
+    <video id="preview" autoplay playsinline muted></video>
+    <p id="status" role="status" aria-live="polite"></p>
+    <p class="note">Your camera starts only if you choose Allow. The video stays on this device; nothing is recorded or uploaded.</p>
+  </main>
+  <script>
+    const startButton = document.getElementById('start');
+    const stopButton = document.getElementById('stop');
+    const video = document.getElementById('preview');
+    const status = document.getElementById('status');
+    let stream = null;
+
+    startButton.addEventListener('click', async () => {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        status.textContent = 'Camera access needs a secure HTTPS page (or localhost) and a supported browser.';
+        return;
+      }
+      try {
+        status.textContent = 'Please allow camera access in your browser prompt.';
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'user' }, audio: false
+        });
+        video.srcObject = stream;
+        video.style.display = 'block';
+        stopButton.hidden = false;
+        startButton.hidden = true;
+        status.textContent = 'There you are — absolutely lovely. ❤️';
+      } catch (error) {
+        if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+          status.textContent = 'Camera permission was not granted. You can allow it in your browser settings and try again.';
+        } else {
+          status.textContent = 'Could not open the camera. Please check that it is available and try again.';
+        }
+      }
+    });
+
+    function turnOffCamera() {
+      if (stream) stream.getTracks().forEach(track => track.stop());
+      stream = null;
+      video.srcObject = null;
+      video.style.display = 'none';
+      stopButton.hidden = true;
+      startButton.hidden = false;
+      status.textContent = 'Camera is off.';
+    }
+    stopButton.addEventListener('click', turnOffCamera);
+    window.addEventListener('pagehide', turnOffCamera);
+  </script>
+</body>
+</html>
